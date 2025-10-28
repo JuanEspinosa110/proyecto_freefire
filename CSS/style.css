@@ -1,0 +1,70 @@
+/* Fondo con video */
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1; /* Para que quede detrás del contenido */
+}
+
+/* Fondo alternativo */
+.bg-fondo-recuperar {
+  background: url("../img/fondo2.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* Fondo principal */
+.image-bg {
+  background: url("../img/fondo.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color: #fff; 
+}
+
+/* Caja del login */
+.login-card {
+  background-color: rgba(0, 0, 0, 0.9); /* Fondo negro con opacidad */
+  color: gold; /* Letras doradas */
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  max-width: 400px;
+  width: 100%;
+  padding: 20px;
+}
+
+/* Títulos, labels y links */
+.login-card h1,
+.login-card label,
+.login-card a {
+  color: gold;
+}
+
+/* Inputs */
+.form-control {
+  background-color: transparent;
+  border: 1px solid gold;
+  color: gold;
+}
+
+.form-control::placeholder {
+  color: rgba(255, 215, 0, 0.5); /* Placeholder dorado más claro */
+}
+
+/* Botón */
+.btn-warning {
+  background-color: gold;
+  border: none;
+  color: black;
+  font-weight: bold;
+}
+
+.btn-warning:hover {
+  background-color: #e6c200;
+  color: black;
+}
+
+/* Links hover */
+a:hover {
+  color: #fff176;
+}

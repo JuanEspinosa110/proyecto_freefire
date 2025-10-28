@@ -1,0 +1,270 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #0d0d0d; 
+    color: #fff;
+}
+
+.contenedor-principal-registro {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+.seccion-video-registro {
+    flex: 0.99; 
+    overflow: hidden;
+    position: relative;
+}
+
+.seccion-video-registro video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.seccion-formulario-registro {
+    flex: 0.55;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #1a1a1a, #0d0d0d);
+    padding: 40px;
+}
+
+.titulo-registro {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #ffcc00; 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #ff9900;
+}
+
+.formulario-registro {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.etiqueta-registro {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #ffcc00;
+}
+
+.entrada-registro {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #ff9900;
+    border-radius: 5px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.entrada-registro:focus {
+    border-color: #ffcc00;
+    box-shadow: 0 0 8px #ffcc00;
+}
+
+.boton-registro {
+    padding: 12px;
+    background: #ff9900;
+    color: #000;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.3s;
+}
+
+.boton-registro:hover {
+    background: #ffcc00;
+    box-shadow: 0 0 12px #ffcc00;
+}
+
+/*PERSONAJE*/
+
+/* ==============================
+   SECCIÓN DE PERSONAJES (USERS)
+   ============================== */
+
+.fondo-personajes {
+  background: url('../IMG/fondo_personajes.jpeg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+}
+
+.personaje-actual {
+  border: 3px solid #ffcc00;
+  box-shadow: 0 0 15px #ffcc00;
+}
+
+.personajes-contenedor {
+  display: flex;
+  height: 100vh;
+}
+
+/* Panel izquierdo (lista de personajes) */
+.personajes-lista {
+  width: 35%;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 20px;
+  text-align: center;
+  border-right: 3px solid #ff9900;
+}
+
+.personajes-titulo {
+  color: #ffcc00;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+}
+
+.personajes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.personajes-miniatura {
+  width: 100%;
+  height: 250px;
+  object-fit: contain;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 2px solid orange;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.personajes-miniatura:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px #ffcc00;
+}
+
+.seleccionado {
+  box-shadow: 0 0 15px 5px gold;
+}
+
+/* Panel derecho */
+.personajes-detalle {
+  width: 65%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
+}
+
+.personajes-imagen {
+  max-height: 420px;
+  transition: 0.3s;
+  margin-bottom: 10px;
+  margin-right: 200px;
+}
+
+/* Bloque de información a la derecha */
+.info-bloque {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid orange;
+  border-radius: 10px;
+  padding: 15px;
+  width: 300px;
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.info-bloque h2 {
+  color: #ffcc00;
+  margin-bottom: 10px;
+  font-size: 1.4em;
+}
+
+.info-bloque p {
+  color: #ccc;
+  font-size: 0.95em;
+  margin-bottom: 15px;
+}
+
+.personajes-boton {
+  background: orange;
+  color: black;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.personajes-boton:hover {
+  background: #ffcc00;
+  box-shadow: 0 0 12px #ffcc00;
+}
+
+
+/* 🎮 Estilo general del cuerpo para ambas vistas */
+.salas-body,
+.crear-sala-body {
+  background: url("../IMG/fondo.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* 🧱 Tarjetas y estructura */
+.salas-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+}
+
+/* Botones */
+.btn-crear-sala {
+  background: linear-gradient(90deg, #28a745, #2ecc71);
+  border: none;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.btn-crear-sala:hover {
+  background: linear-gradient(90deg, #239b56, #27ae60);
+  transform: scale(1.03);
+}
+
+/* Títulos */
+h2, h5, label {
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+}
+
+/* Inputs y selects */
+.form-select, .form-control {
+  background-color: rgba(0,0,0,0.6);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 6px rgba(40,167,69,0.5);
+}
+
+/* 🧍 Tarjetas de salas */
+.salas-card .card-footer {
+  background: transparent;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
