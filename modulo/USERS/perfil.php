@@ -27,7 +27,7 @@ $sql = $con->prepare("
         p.skin
     FROM usuario u
     LEFT JOIN niveles n ON u.id_niveles = n.id_niveles
-    LEFT JOIN id_tip_user t ON u.id_tip_user = t.id_tip_user
+    LEFT JOIN tip_user t ON u.id_tip_user = t.id_tip_user
     LEFT JOIN estado e ON u.id_estado = e.id_estado
     LEFT JOIN personajes p ON u.Id_personajes = p.Id_personajes
     WHERE u.id_user = ?

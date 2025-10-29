@@ -10,17 +10,25 @@ body {
   background-color: #000;
 }
 
-.background-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url("../IMG/fondo.jpg") no-repeat center center fixed;
+/* Fondo general del lobby */
+.fondo-lobby {
+  background: url("../../IMG/fondo.jpg") no-repeat center center fixed;
   background-size: cover;
-  z-index: -1; /* Para que quede detrás del contenido */
-  opacity: 0.9; /* Ajusta la transparencia si quieres */
+  min-height: 100vh;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Sombra oscura encima del fondo */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* Ajusta opacidad (0.3 - 0.7) */
+  z-index: 0;
+}
+
 
 
 /* ========================================== */

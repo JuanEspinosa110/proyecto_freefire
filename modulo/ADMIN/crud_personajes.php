@@ -119,7 +119,7 @@ $personajes = $query->fetchAll(PDO::FETCH_ASSOC);
 
   <div class="text-end mb-4">
     <a href="form_personaje.php" class="btn btn-success">Agregar nuevo personaje</a>
-    <a href="index.php" class="btn btn-secondary">⬅ Volver al Lobby</a>
+    <a href="index.php" class="btn btn-secondary">Volver al Lobby</a>
   </div>
 
   <div class="row g-4">

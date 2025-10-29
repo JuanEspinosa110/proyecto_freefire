@@ -1,107 +1,134 @@
 <?php
-require '../../DB/conection.php';
 session_start();
-
-$id_sala = $_GET['id_sala'] ?? null;
-if (!$id_sala) {
-    die("Sala no encontrada");
-}
-
+require '../../DB/conection.php';
 $db = new Database();
 $pdo = $db->conectar();
 
-// Información de la sala
-$sql = $pdo->prepare("
-    SELECT s.id_sala, m.nombre AS modo, n.nombre AS nivel, mp.nombre AS mapa, s.jugadores_actuales, s.max_jugadores
-    FROM sala s
-    JOIN modos_juegos m ON s.id_modo_juegos = m.id_modo_juegos
-    JOIN niveles n ON s.id_niveles = n.id_niveles
-    JOIN mapa mp ON s.id_mapa = mp.id_mapa
-    WHERE s.id_sala = ?
-");
-$sql->execute([$id_sala]);
-$sala = $sql->fetch(PDO::FETCH_ASSOC);
-
-if (!$sala) {
-    die("La sala no existe");
-}
-
-// Jugadores en la sala
-$stmtJugadores = $pdo->prepare("
-    SELECT u.id_user, u.username 
-    FROM usuario_sala us
-    JOIN usuario u ON us.id_user = u.id_user
-    WHERE us.id_sala = ?
-");
-$stmtJugadores->execute([$id_sala]);
-$jugadores = $stmtJugadores->fetchAll(PDO::FETCH_ASSOC);
-
-// Si el usuario presiona “Empezar partida”
-if (isset($_POST['empezar'])) {
-    // Guardamos la sala en sesión (para que partida.php sepa cuál es)
-    $_SESSION['id_sala_actual'] = $id_sala;
-
-    // Redirigir a partida.php con el id_sala
-    header("Location: partida.php?id_sala=" . $id_sala);
+if (!isset($_SESSION['id_user'])) {
+    header("Location: ../../index.php");
     exit();
 }
+
+$id_user = $_SESSION['id_user'];
+$id_sala = isset($_GET['id_sala']) ? (int)$_GET['id_sala'] : 0;
+if ($id_sala <= 0) die("Sala no encontrada.");
+
+// ----------------------
+// 1️⃣ Sacar al usuario de otras salas activas
+// ----------------------
+$stmt = $pdo->prepare("UPDATE usuario_sala SET eliminado = 1 WHERE id_user = ?");
+$stmt->execute([$id_user]);
+
+// ----------------------
+// 2️⃣ Insertar al usuario en esta sala si no está
+// ----------------------
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM usuario_sala WHERE id_user = ? AND id_sala = ? AND eliminado = 0");
+$stmt->execute([$id_user, $id_sala]);
+$existe = $stmt->fetchColumn();
+
+if (!$existe) {
+    $insert = $pdo->prepare("INSERT INTO usuario_sala (id_user, id_sala, tiempo_entrada, eliminado) VALUES (?, ?, NOW(), 0)");
+    $insert->execute([$id_user, $id_sala]);
+}
+
+// ----------------------
+// 3️⃣ Actualizar cantidad de jugadores activos en la sala
+// ----------------------
+$update = $pdo->prepare("
+    UPDATE sala 
+    SET jugadores_actuales = (
+        SELECT COUNT(*) 
+        FROM usuario_sala 
+        WHERE id_sala = ? AND eliminado = 0
+    )
+    WHERE id_sala = ?
+");
+$update->execute([$id_sala, $id_sala]);
+
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ver Sala</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background: url("../../IMG/fondo.jpg") no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-      font-family: 'Poppins', sans-serif;
-      min-height: 100vh;
-      padding-top: 40px;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.46);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(4px);
-      padding: 15px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Sala de Espera</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body {
+  background: url("../../IMG/fondo.jpg") center/cover no-repeat fixed;
+  color:#fff;
+  font-family:'Poppins',sans-serif;
+}
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:0; }
+.container { position:relative; z-index:1; margin-top:60px; text-align:center; }
+.card-player {
+  background:rgba(0,0,0,0.75);
+  border-radius:10px;
+  padding:10px;
+  margin:10px;
+  display:inline-block;
+  width:160px;
+}
+.card-player img {
+  width:80px; height:80px;
+  border-radius:50%;
+  border:2px solid #ffcc00;
+}
+.btn-salir {
+  background-color:#ff4444;
+  border:none;
+  padding:8px 15px;
+  color:#fff;
+  border-radius:8px;
+}
+</style>
 </head>
 <body>
-  <div class="container text-center">
-    <h2 class="mb-4">Sala: <?= htmlspecialchars($sala['modo']) ?> - <?= htmlspecialchars($sala['mapa']) ?></h2>
+<div class="overlay"></div>
+<div class="container">
+  <h2 class="mb-3">Sala #<?= $id_sala ?></h2>
+  <h5 id="estado">Esperando jugadores...</h5>
 
-    <div class="card p-4 mb-4">
-      <p><strong>Nivel:</strong> <?= htmlspecialchars($sala['nivel']) ?></p>
-      <p><strong>Jugadores:</strong> <?= $sala['jugadores_actuales'] ?>/<?= $sala['max_jugadores'] ?></p>
-    </div>
+  <div id="jugadores" class="mt-3 d-flex flex-wrap justify-content-center"></div>
 
-    <div class="card p-4 mb-4">
-      <h4>Jugadores en la sala</h4>
-      <?php if (empty($jugadores)): ?>
-        <p class="text-muted">Aún no hay jugadores en esta sala.</p>
-      <?php else: ?>
-        <ul class="list-group list-group-flush">
-          <?php foreach ($jugadores as $j): ?>
-            <li class="list-group-item bg-transparent text-white border-secondary">
-              <?= htmlspecialchars($j['username']) ?>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      <?php endif; ?>
-    </div>
-
-    <div class="d-flex justify-content-center gap-2">
-      <a href="unirse_sala.php?id_sala=<?= $sala['id_sala'] ?>" class="btn btn-success">Unirse a la Sala</a>
-      <a href="salas.php" class="btn btn-secondary">Volver</a>
-      <form method="POST" style="display:inline;">
-        <button type="submit" name="empezar" class="btn btn-danger">Empezar partida</button>
-      </form>
-    </div>
+  <div class="mt-4">
+    <button id="salir" class="btn-salir">Salir de la Sala</button>
   </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(function(){
+  const idSala = <?= $id_sala ?>;
+  const $jugadores = $('#jugadores');
+  const $estado = $('#estado');
+
+  function actualizarJugadores() {
+    $.get('ajax_sala.php', { id_sala: idSala }, function(data){
+      try {
+        const info = JSON.parse(data);
+        $jugadores.html(info.html);
+        const count = info.count ?? 0;
+        if (count < 5) {
+          $estado.text('Esperando jugadores... (' + count + '/5)');
+        } else {
+          $estado.text('Iniciando partida...');
+        }
+      } catch(e) {
+        console.error('Error JSON:', e, data);
+      }
+    });
+  }
+
+  setInterval(actualizarJugadores, 2000);
+  actualizarJugadores();
+
+  $('#salir').on('click', function(){
+    if (!confirm('¿Deseas salir de la sala?')) return;
+    $.post('salir_sala.php', { id_sala: idSala }, function(){
+      window.location.href = 'salas.php';
+    });
+  });
+});
+</script>
 </body>
 </html>

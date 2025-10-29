@@ -47,6 +47,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                              WHERE id_user=?");
     $update->execute([$username, $correo, $puntos, $id_estado, $id_user]);
 
+    // ✅ Actualizar el nivel automáticamente según los puntos
+    require_once '../../DB/functions/niveles.php';
+    actualizarNivelUsuario($con, $id_user);
+
+
     // Enviar correo si pasó a activo
     if ($estado_anterior != 1 && $id_estado == 1) {
         $mail = new PHPMailer(true);

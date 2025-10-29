@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="mb-3">
-      <label class="form-label">Imagen del personaje</label>
+      <label class="form-label">Imagen del personaje</label>  
       <input type="file" name="skin" class="form-control">
       <?php if ($editar && $editar['skin']): ?>
         <p class="mt-2 small">Imagen actual:</p>

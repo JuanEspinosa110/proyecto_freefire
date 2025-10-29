@@ -43,11 +43,8 @@ $usuario = $sql->fetch(PDO::FETCH_ASSOC);
 
 <body class="fondo-lobby">
 
-  <!-- 🎬 Video de fondo -->
-  <video autoplay muted loop id="bg-video">
-    <source src="../../videos/Pelancaran Free Fire Max_ 28 September _ Garena Free Fire Malaysia.mp4" type="video/mp4">
-  </video>
   <div class="overlay"></div>
+
 
   <!-- 🔝 Barra superior -->
   <nav class="navbar fixed-top d-flex justify-content-between align-items-center px-4">

@@ -27,7 +27,7 @@ $sql = $con->prepare("
         p.skin
     FROM usuario u
     LEFT JOIN niveles n ON u.id_niveles = n.id_niveles
-    LEFT JOIN id_tip_user t ON u.id_tip_user = t.id_tip_user
+    LEFT JOIN tip_user t ON u.id_tip_user = t.id_tip_user
     LEFT JOIN estado e ON u.id_estado = e.id_estado
     LEFT JOIN personajes p ON u.Id_personajes = p.Id_personajes
     WHERE u.id_user = ?
@@ -105,7 +105,6 @@ if (!$usuario) {
     <p><strong>Estado:</strong> <?= htmlspecialchars($usuario['estado']) ?></p>
     <p><strong>Personaje actual:</strong> <?= htmlspecialchars($usuario['personaje']) ?></p>
     <hr>
-    <a href="cambiar_personaje.php" class="btn btn-warning">Cambiar Personaje</a>
     <a href="../../logout.php" class="btn btn-danger">Cerrar Sesión</a>
   </div>
 </div>

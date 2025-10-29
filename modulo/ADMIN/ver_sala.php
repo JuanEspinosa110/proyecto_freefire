@@ -8,114 +8,125 @@ if (!isset($_SESSION['id_user'])) {
     header("Location: ../../index.php");
     exit();
 }
-$id_user = (int)$_SESSION['id_user'];
-$id_sala = isset($_GET['id_sala']) ? (int)$_GET['id_sala'] : null;
-if (!$id_sala) die("Sala no encontrada.");
 
-// Registrar entrada si no existe en sala_jugadores
-$stmt = $pdo->prepare("SELECT 1 FROM sala_jugadores WHERE id_user = ? AND id_sala = ?");
+$id_user = $_SESSION['id_user'];
+$id_sala = isset($_GET['id_sala']) ? (int)$_GET['id_sala'] : 0;
+if ($id_sala <= 0) die("Sala no encontrada.");
+
+// ----------------------
+// 1️⃣ Sacar al usuario de otras salas activas
+// ----------------------
+$stmt = $pdo->prepare("UPDATE usuario_sala SET eliminado = 1 WHERE id_user = ?");
+$stmt->execute([$id_user]);
+
+// ----------------------
+// 2️⃣ Insertar al usuario en esta sala si no está
+// ----------------------
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM usuario_sala WHERE id_user = ? AND id_sala = ? AND eliminado = 0");
 $stmt->execute([$id_user, $id_sala]);
-if (!$stmt->fetch()) {
-    $pdo->prepare("INSERT INTO sala_jugadores (id_user, id_sala) VALUES (?, ?)")->execute([$id_user, $id_sala]);
-    // Actualizar contador en tabla sala para mantener sincronía (opcional)
-    $pdo->prepare("UPDATE sala SET jugadores_actuales = (SELECT COUNT(*) FROM sala_jugadores WHERE id_sala = ?) WHERE id_sala = ?")
-        ->execute([$id_sala, $id_sala]);
+$existe = $stmt->fetchColumn();
+
+if (!$existe) {
+    $insert = $pdo->prepare("INSERT INTO usuario_sala (id_user, id_sala, tiempo_entrada, eliminado) VALUES (?, ?, NOW(), 0)");
+    $insert->execute([$id_user, $id_sala]);
 }
 
-// Obtener info del mapa para el fondo (usa tabla mapa.imagen)
-$stmt = $pdo->prepare("SELECT s.id_mapa, m.imagen AS mapa_imagen FROM sala s LEFT JOIN mapa m ON s.id_mapa = m.id_mapa WHERE s.id_sala = ?");
-$stmt->execute([$id_sala]);
-$sala_info = $stmt->fetch(PDO::FETCH_ASSOC);
-$mapa_img = $sala_info['mapa_imagen'] ?? 'fondo.jpg';
-// Normalizar ruta del mapa para usar desde este archivo (modulo/ADMIN/ver_sala.php)
-if (preg_match('/^https?:\\/\\//', $mapa_img)) {
-    $mapa_path = $mapa_img;
-} else {
-    $mapa = ltrim($mapa_img, '/');
-    // Si la ruta ya incluye IMG/ la respetamos; si no, la consideramos dentro de IMG/
-    if (stripos($mapa, 'img/') === 0) {
-        $mapa_path = '../../' . $mapa; // e.g. IMG/bermuda.jpeg
-    } else {
-        $mapa_path = '../../IMG/' . $mapa; // e.g. bermuda.jpeg -> ../../IMG/bermuda.jpeg
-    }
-}
+// ----------------------
+// 3️⃣ Actualizar cantidad de jugadores activos en la sala
+// ----------------------
+$update = $pdo->prepare("
+    UPDATE sala 
+    SET jugadores_actuales = (
+        SELECT COUNT(*) 
+        FROM usuario_sala 
+        WHERE id_sala = ? AND eliminado = 0
+    )
+    WHERE id_sala = ?
+");
+$update->execute([$id_sala, $id_sala]);
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<title>Sala de Espera - Sala #<?= htmlspecialchars($id_sala) ?></title>
+<meta charset="UTF-8">
+<title>Sala de Espera</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.5/dist/jquery.min.js"></script>
 <style>
-/* fondo - la ruta en la BD ya incluye /img/mapas/..., hacemos un fallback si es ruta relativa */
-body.salas-body {
-  background: url("<?= htmlspecialchars($mapa_path) ?>") center/cover no-repeat fixed;
-  font-family:Poppins, sans-serif;
+body {
+  background: url("../../IMG/fondo.jpg") center/cover no-repeat fixed;
   color:#fff;
-  min-height:100vh;
-  position:relative;
-  margin:0;
+  font-family:'Poppins',sans-serif;
 }
-.overlay { position:absolute;inset:0;background:rgba(0,0,0,0.6);z-index:1; }
-.container.salas-container{position:relative;z-index:2;padding-top:60px;max-width:900px;margin:0 auto;text-align:center}
-.salas-player-card{background:rgba(0,0,0,0.75);border-radius:10px;padding:12px;margin:8px;width:170px}
-.salas-player-card img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #ffd700;margin-bottom:6px}
-#salas-timer{font-size:2.6rem;margin:8px 0}
-.btn-salir{background:#ff4444;border:none;color:#fff;padding:10px 18px;border-radius:10px}
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:0; }
+.container { position:relative; z-index:1; margin-top:60px; text-align:center; }
+.card-player {
+  background:rgba(0,0,0,0.75);
+  border-radius:10px;
+  padding:10px;
+  margin:10px;
+  display:inline-block;
+  width:160px;
+}
+.card-player img {
+  width:80px; height:80px;
+  border-radius:50%;
+  border:2px solid #ffcc00;
+}
+.btn-salir {
+  background-color:#ff4444;
+  border:none;
+  padding:8px 15px;
+  color:#fff;
+  border-radius:8px;
+}
 </style>
 </head>
-<body class="salas-body">
+<body>
 <div class="overlay"></div>
-<div class="container salas-container">
-  <h2>Sala de Espera - Sala #<?= htmlspecialchars($id_sala) ?></h2>
-  <div id="salas-mensaje">Esperando jugadores...</div>
-  <div id="salas-timer">60</div>
+<div class="container">
+  <h2 class="mb-3">Sala #<?= $id_sala ?></h2>
+  <h5 id="estado">Esperando jugadores...</h5>
 
-  <div id="salas-jugadores" class="d-flex flex-wrap justify-content-center mt-4">
-    <!-- Jugadores iniciales inyectados por AJAX también -->
+  <div id="jugadores" class="mt-3 d-flex flex-wrap justify-content-center"></div>
+
+  <div class="mt-4">
+    <button id="salir" class="btn-salir">Salir de la Sala</button>
   </div>
-
-  <button id="salir-sala" class="btn-salir mt-3">Salir de la Sala</button>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-let timer = 60;
-function actualizarSala(){
-  // Usar getJSON para parseo automático
-  $.getJSON('ajax_sala.php', { id_sala: <?= $id_sala ?> })
-    .done(function(info){
-      $('#salas-jugadores').html(info.jugadores_html);
-      $('#salas-mensaje').text(info.mensaje);
-      if (info.finalizar) {
-        if (info.alerta) alert(info.alerta);
-        window.location.href = 'salas.php';
-      }
-    })
-    .fail(function(xhr, status, err){
-      console.error('Error AJAX ajax_sala:', err);
-    });
-}
-function iniciarTimer(){
-  $('#salas-timer').text(timer);
-  var t = setInterval(function(){
-    if (timer > 0) {
-      timer--;
-      $('#salas-timer').text(timer);
-    } else {
-      clearInterval(t);
-      $('#salas-mensaje').text('¡Iniciando partida!');
-      // aquí podrías redirigir a partida.php
-    }
-  }, 1000);
-}
 $(function(){
-  actualizarSala(); iniciarTimer();
-  setInterval(actualizarSala, 2000);
-  $('#salir-sala').click(function(){
-    $.post('salir_sala.php', { id_sala: <?= $id_sala ?> })
-      .done(function(){ window.location.href = 'salas.php'; })
-      .fail(function(){ alert('No se pudo salir de la sala. Intenta de nuevo.'); });
+  const idSala = <?= $id_sala ?>;
+  const $jugadores = $('#jugadores');
+  const $estado = $('#estado');
+
+  function actualizarJugadores() {
+    $.get('ajax_sala.php', { id_sala: idSala }, function(data){
+      try {
+        const info = JSON.parse(data);
+        $jugadores.html(info.html);
+        const count = info.count ?? 0;
+        if (count < 5) {
+          $estado.text('Esperando jugadores... (' + count + '/5)');
+        } else {
+          $estado.text('Iniciando partida...');
+        }
+      } catch(e) {
+        console.error('Error JSON:', e, data);
+      }
+    });
+  }
+
+  setInterval(actualizarJugadores, 2000);
+  actualizarJugadores();
+
+  $('#salir').on('click', function(){
+    if (!confirm('¿Deseas salir de la sala?')) return;
+    $.post('salir_sala.php', { id_sala: idSala }, function(){
+      window.location.href = 'salas.php';
+    });
   });
 });
 </script>
