@@ -1,0 +1,148 @@
+/* 🎮 ESTILOS PRINCIPALES DEL LOBBY */
+
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  overflow: hidden;
+  background-color: #000;
+}
+
+/* Fondo general del lobby */
+.fondo-lobby {
+  background: url("../IMG/fondo.jpg") no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sombra oscura encima del fondo */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* Ajusta opacidad (0.3 - 0.7) */
+  z-index: 0;
+}
+
+
+
+/* ========================================== */
+/* 🔝 Barra superior */
+.navbar {
+  background: rgba(0, 0, 0, 0.65);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  height: 70px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================== */
+/* 🎮 Menú lateral izquierdo */
+.menu-lateral {
+  position: absolute;        /* Siempre visible, aunque se mueva el contenido */
+  top: 150px;             /* Lo sube para quedar cerca del borde superior */
+  left: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;              /* Un poco más de espacio entre botones */
+  z-index: 10;
+}
+
+
+/* Botones del menú */
+.btn-menu {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  font-size: 15px;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px #000;
+}
+
+/* Hover de los botones */
+.btn-menu:hover {
+  background: rgba(255, 204, 0, 0.8);
+  color: #000;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #ffcc00;
+}
+
+/* ========================================== */
+/* 🧍‍♂️ Personaje en el centro */
+
+/* === CONTENEDOR DEL PERSONAJE === */
+.character-container {
+  position: absolute;
+  top: 55%;           /* Centrado vertical aproximado */
+  left: 50%;          /* Un poco hacia la derecha, alejándolo del menú */
+  transform: translate(-50%, -50%);
+  z-index: 5;         /* Encima del fondo, debajo del navbar */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40%;         /* Ajusta según tamaño deseado */
+}
+
+/* === IMAGEN DEL PERSONAJE === */
+.personaje {
+  width: 600px;          /* Tamaño del personaje */
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 0 15px rgba(255, 200, 50, 0.4));
+}
+
+.personaje:hover {
+  transform: scale(1.05);
+}
+
+.character {
+  position: absolute;
+  top: 55%; /* centra verticalmente */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 5;
+}
+
+
+/* 🚪 Botón Cerrar Sesión (parte inferior derecha) */
+.logout-btn {
+  background: rgba(255, 0, 0, 0.267);
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 12px;
+  padding: 12px 25px;
+  font-size: 15px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.171);
+  text-shadow: 0 0 5px #000;
+}
+
+/* Hover */
+.logout-btn:hover {
+  background: linear-gradient(90deg, #630505a2, #d8a75da2);
+  transform: scale(1.1);
+  box-shadow: 0 0 25px #ff33005b, 0 0 45px #ff6600;
+}
+
+/* Efecto de clic */
+.logout-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 10px #ff000049;
+}
+
