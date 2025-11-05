@@ -9,16 +9,6 @@ if ($id_sala <= 0) {
     echo json_encode(['html' => '<p>Error: Sala inválida</p>', 'count' => 0]);
     exit;
 }
-// Verificar si la partida ya fue iniciada
-$check = $pdo->prepare("SELECT estado_partida FROM sala WHERE id_sala = ?");
-$check->execute([$id_sala]);
-$estado = $check->fetchColumn();
-
-if ($estado == 1) {
-    echo json_encode(['started' => true]);
-    exit;
-}
-
 
 // Traer jugadores activos
 $stmt = $pdo->prepare("

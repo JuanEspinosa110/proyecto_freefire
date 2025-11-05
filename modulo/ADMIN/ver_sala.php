@@ -13,15 +13,11 @@ $id_user = $_SESSION['id_user'];
 $id_sala = isset($_GET['id_sala']) ? (int)$_GET['id_sala'] : 0;
 if ($id_sala <= 0) die("Sala no encontrada.");
 
-// ----------------------
 // 1️⃣ Sacar al usuario de otras salas activas
-// ----------------------
-$stmt = $pdo->prepare("UPDATE usuario_sala SET eliminado = 1 WHERE id_user = ?");
-$stmt->execute([$id_user]);
+$stmt = $pdo->prepare("UPDATE usuario_sala SET eliminado = 1 WHERE id_user = ? AND id_sala != ?");
+$stmt->execute([$id_user, $id_sala]);
 
-// ----------------------
 // 2️⃣ Insertar al usuario en esta sala si no está
-// ----------------------
 $stmt = $pdo->prepare("SELECT COUNT(*) FROM usuario_sala WHERE id_user = ? AND id_sala = ? AND eliminado = 0");
 $stmt->execute([$id_user, $id_sala]);
 $existe = $stmt->fetchColumn();
@@ -31,9 +27,7 @@ if (!$existe) {
     $insert->execute([$id_user, $id_sala]);
 }
 
-// ----------------------
 // 3️⃣ Actualizar cantidad de jugadores activos en la sala
-// ----------------------
 $update = $pdo->prepare("
     UPDATE sala 
     SET jugadores_actuales = (
@@ -45,12 +39,16 @@ $update = $pdo->prepare("
 ");
 $update->execute([$id_sala, $id_sala]);
 
+// 4️⃣ Verificar tipo de usuario (para mostrar botón de inicio)
+$stmt = $pdo->prepare("SELECT id_tip_user FROM usuario WHERE id_user = ?");
+$stmt->execute([$id_user]);
+$tipo = $stmt->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sala de Espera</title>
+<title>Sala de Espera (Admin)</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
 body {
@@ -80,6 +78,17 @@ body {
   color:#fff;
   border-radius:8px;
 }
+.btn-iniciar {
+  background-color:#ffcc00;
+  border:none;
+  padding:8px 15px;
+  color:#000;
+  font-weight:bold;
+  border-radius:8px;
+}
+.btn-iniciar:hover {
+  background-color:#ffd633;
+}
 </style>
 </head>
 <body>
@@ -90,31 +99,42 @@ body {
 
   <div id="jugadores" class="mt-3 d-flex flex-wrap justify-content-center"></div>
 
-  <div class="mt-4">
+  <div class="mt-4 d-flex justify-content-center gap-3">
     <button id="salir" class="btn-salir">Salir de la Sala</button>
+    <?php if ($tipo == 1): ?>
+      <button id="btnIniciar" class="btn-iniciar">🚀 Iniciar Partida</button>
+    <?php endif; ?>
   </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(function(){
-  const idSala = <?= $id_sala ?>;
+  const idSala = <?= json_encode($id_sala) ?>;
   const $jugadores = $('#jugadores');
   const $estado = $('#estado');
 
+  // ✅ Mostrar jugadores en tiempo real
   function actualizarJugadores() {
     $.get('ajax_sala.php', { id_sala: idSala }, function(data){
       try {
         const info = JSON.parse(data);
+
+        if (info.started) {
+          // Si la partida ya comenzó, redirigir
+          window.location.href = 'partida.php?id_sala=' + idSala;
+          return;
+        }
+
         $jugadores.html(info.html);
         const count = info.count ?? 0;
         if (count < 5) {
           $estado.text('Esperando jugadores... (' + count + '/5)');
         } else {
-          $estado.text('Iniciando partida...');
+          $estado.text('Listo para iniciar');
         }
       } catch(e) {
-        console.error('Error JSON:', e, data);
+        console.error('Error procesando JSON:', data);
       }
     });
   }
@@ -122,10 +142,45 @@ $(function(){
   setInterval(actualizarJugadores, 2000);
   actualizarJugadores();
 
+  // ✅ Botón salir funcional
   $('#salir').on('click', function(){
     if (!confirm('¿Deseas salir de la sala?')) return;
-    $.post('salir_sala.php', { id_sala: idSala }, function(){
-      window.location.href = 'salas.php';
+    $.ajax({
+      url: 'salir_sala.php',
+      type: 'POST',
+      dataType: 'json',
+      data: { id_sala: idSala },
+      success: function(res) {
+        if (res.status === 'ok') {
+          alert('Has salido de la sala.');
+          window.location.href = 'salas.php';
+        } else {
+          alert('Error: ' + (res.error || 'No se pudo salir.'));
+        }
+      },
+      error: function() {
+        alert('Error al comunicarse con el servidor.');
+      }
+    });
+  });
+
+  // ✅ Botón iniciar partida solo para admin
+  $('#btnIniciar').on('click', function(){
+    if (!confirm('¿Deseas iniciar la partida para todos los jugadores?')) return;
+    $.ajax({
+      url: 'iniciar_partida.php',
+      type: 'POST',
+      dataType: 'json',
+      data: { id_sala: idSala },
+      success: function(r){
+        alert(r.mensaje || 'Partida iniciada.');
+        if (r.status === 'ok') {
+          window.location.href = 'partida.php?id_sala=' + idSala;
+        }
+      },
+      error: function(){
+        alert('Error al iniciar la partida.');
+      }
     });
   });
 });

@@ -5,11 +5,12 @@ $db = new Database();
 $pdo = $db->conectar();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Sesión
+// Verificar sesión
 if (!isset($_SESSION['id_user'])) {
     header("Location: ../../index.php");
     exit();
 }
+
 $id_user = (int)$_SESSION['id_user'];
 
 // Obtener nivel y tipo de usuario
@@ -17,6 +18,7 @@ $stmt = $pdo->prepare("SELECT id_niveles, id_tip_user FROM usuario WHERE id_user
 $stmt->execute([$id_user]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$user) die("Usuario no encontrado.");
+
 $nivel_user = (int)$user['id_niveles'];
 $id_tip_user = (int)$user['id_tip_user'];
 
@@ -29,7 +31,7 @@ function crearSalaSiNoExiste($pdo, $cond_sql, $param) {
     $stmt->execute([$param]);
     $count = (int)$stmt->fetchColumn();
     if ($count === 0) {
-        $pdo->prepare("INSERT INTO sala (id_modo_juegos, id_niveles, id_mapa, id_estado, jugadores_actuales, max_jugadores, fecha_creacion) 
+        $pdo->prepare("INSERT INTO sala (id_modo_juegos, id_niveles, id_mapa, id_estado, jugadores_actuales, max_jugadores, fecha_creacion)
                        VALUES (1, ?, 1, 1, 0, 5, NOW())")->execute([$param]);
     }
 }
@@ -37,37 +39,22 @@ crearSalaSiNoExiste($pdo, "id_niveles = ?", 1);
 crearSalaSiNoExiste($pdo, "id_niveles = ?", 2);
 
 // ----------------------
-// Consultar salas visibles para este usuario
+// Consultar salas visibles según el nivel del jugador
 // ----------------------
-if ($nivel_user == 1) {
-    $sql = "
-      SELECT s.*, m.nombre AS modo, mp.nombre AS mapa, n.nombre AS nivel, e.nombre AS estado,
-        (SELECT COUNT(*) FROM usuario_sala us WHERE us.id_sala = s.id_sala AND (us.eliminado = 0 OR us.eliminado IS NULL)) AS jugadores_actuales_real
-      FROM sala s
-      JOIN modos_juegos m ON s.id_modo_juegos = m.id_modo_juegos
-      JOIN mapa mp ON s.id_mapa = mp.id_mapa
-      JOIN niveles n ON s.id_niveles = n.id_niveles
-      JOIN estado e ON s.id_estado = e.id_estado
-      WHERE s.id_niveles = 1
-      ORDER BY s.id_sala ASC
-    ";
-    $stmt = $pdo->query($sql);
-    $salas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $sql = "
-      SELECT s.*, m.nombre AS modo, mp.nombre AS mapa, n.nombre AS nivel, e.nombre AS estado,
-        (SELECT COUNT(*) FROM usuario_sala us WHERE us.id_sala = s.id_sala AND (us.eliminado = 0 OR us.eliminado IS NULL)) AS jugadores_actuales_real
-      FROM sala s
-      JOIN modos_juegos m ON s.id_modo_juegos = m.id_modo_juegos
-      JOIN mapa mp ON s.id_mapa = mp.id_mapa
-      JOIN niveles n ON s.id_niveles = n.id_niveles
-      JOIN estado e ON s.id_estado = e.id_estado
-      WHERE s.id_niveles >= 2
-      ORDER BY s.id_sala ASC
-    ";
-    $stmt = $pdo->query($sql);
-    $salas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+$sql = "
+  SELECT s.*, m.nombre AS modo, mp.nombre AS mapa, n.nombre AS nivel, e.nombre AS estado,
+    (SELECT COUNT(*) FROM usuario_sala us WHERE us.id_sala = s.id_sala AND (us.eliminado = 0 OR us.eliminado IS NULL)) AS jugadores_actuales_real
+  FROM sala s
+  JOIN modos_juegos m ON s.id_modo_juegos = m.id_modo_juegos
+  JOIN mapa mp ON s.id_mapa = mp.id_mapa
+  JOIN niveles n ON s.id_niveles = n.id_niveles
+  JOIN estado e ON s.id_estado = e.id_estado
+  WHERE s.id_niveles <= ?
+  ORDER BY s.id_sala ASC
+";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$nivel_user]);
+$salas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="es">
